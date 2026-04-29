@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>출결 서류 서명</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/print.css" media="print">
+  <style>
+    body { background: var(--bg); }
+
+    .sign-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    .sign-header {
+      text-align: center;
+      padding: 32px 0 24px;
+    }
+    .sign-header .school-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .sign-header h1 { font-size: 24px; margin-bottom: 6px; }
+    .sign-header p  { font-size: 15px; }
+
+    /* 서류 카드 */
+    .doc-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    /* 서명 패드 */
+    .sig-section {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .sig-label {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .sig-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .sig-canvas-wrap {
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: #FAFAFA;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .sig-canvas-wrap.active { border-color: var(--accent); }
+
+    #sigCanvas {
+      display: block;
+      width: 100%;
+      height: 160px;
+      cursor: crosshair;
+    }
+
+    .sig-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      color: var(--border);
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+
+    .sig-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    /* 상태 화면 */
+    .state-screen {
+      text-align: center;
+      padding: 80px 24px;
+    }
+    .state-icon { font-size: 56px; margin-bottom: 20px; }
+    .state-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+    .state-desc  { font-size: 15px; color: var(--text-secondary); }
+
+    /* 완료 버튼 */
+    .submit-btn-wrap {
+      position: sticky;
+      bottom: 24px;
+      z-index: 10;
+      text-align: center;
+    }
+    .submit-btn-wrap .btn {
+      box-shadow: 0 4px 24px rgba(0,122,255,0.35);
+      padding: 16px 40px;
+      font-size: 17px;
+    }
+
+    /* 로딩 */
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+      color: var(--text-secondary);
+    }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+  </style>
+</head>
+<body>
+
+<div class="sign-wrap">
+
+  <!-- 로딩 -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <span>서류를 불러오는 중...</span>
+  </div>
+
+  <!-- 오류 / 완료 / 만료 상태 -->
+  <div id="stateScreen" class="state-screen" style="display:none;"></div>
+
+  <!-- 서명 메인 UI -->
+  <div id="mainUI" style="display:none;">
+
+    <div class="sign-header">
+      <div class="school-label" id="schoolLabel"></div>
+      <h1>출결 서류 서명 요청</h1>
+      <p>서류 내용을 확인하신 후 아래에 서명해 주세요.</p>
+    </div>
+
+    <!-- 서류 내용 -->
+    <div class="doc-card no-print" id="docContent"></div>
+
+    <!-- 서명 패드 -->
+    <div class="sig-section no-print">
+      <div class="sig-label">학부모 서명</div>
+      <div class="sig-hint">아래 박스 안에 손가락 또는 마우스로 서명해 주세요.</div>
+
+      <div class="sig-canvas-wrap" id="canvasWrap">
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-placeholder" id="sigPlaceholder">← 여기에 서명하세요</div>
+      </div>
+
+      <div class="sig-actions">
+        <button class="btn btn-ghost" style="font-size:14px;" onclick="clearSig()">지우기</button>
+      </div>
+    </div>
+
+    <!-- 제출 버튼 -->
+    <div class="submit-btn-wrap no-print">
+      <button class="btn btn-primary btn-lg" id="submitBtn" onclick="submitSignature()">
+        서명 완료
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script src="../assets/attendance-parser.js"></script>
+<script src="sign.js"></script>
+</body>
+</html>

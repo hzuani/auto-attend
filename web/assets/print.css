@@ -1,0 +1,177 @@
+/* 출결 서류 인쇄 전용 스타일 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+@page {
+  size: A4 portrait;
+  margin: 18mm 20mm;
+}
+
+@media print {
+  body {
+    font-family: 'Pretendard', '맑은 고딕', 'Malgun Gothic', sans-serif;
+    font-size: 10pt;
+    color: #000;
+    background: #fff;
+  }
+
+  .no-print { display: none !important; }
+
+  .form-page {
+    page-break-after: always;
+    background: #fff;
+    padding: 0;
+  }
+  .form-page:last-child { page-break-after: avoid; }
+}
+
+/* 서류 공통 */
+.form-page {
+  font-family: 'Pretendard', '맑은 고딕', 'Malgun Gothic', sans-serif;
+  font-size: 10pt;
+  color: #000;
+  background: #fff;
+  width: 100%;
+  max-width: 170mm;
+  margin: 0 auto;
+}
+
+.form-title-wrap {
+  text-align: center;
+  margin-bottom: 20pt;
+  padding-bottom: 10pt;
+  border-bottom: 2px solid #000;
+}
+
+.form-title {
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-bottom: 4pt;
+}
+
+.form-subtitle {
+  font-size: 9pt;
+  color: #555;
+}
+
+/* 서류 테이블 */
+.form-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12pt;
+}
+
+.form-table th,
+.form-table td {
+  border: 1px solid #333;
+  padding: 6pt 8pt;
+  font-size: 10pt;
+  vertical-align: middle;
+}
+
+.form-table th {
+  background: #F2F2F2;
+  font-weight: 600;
+  width: 80pt;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.form-table td {
+  text-align: left;
+}
+
+.form-table .wide-label th {
+  width: 100pt;
+}
+
+/* 체크박스 행 */
+.checkbox-row {
+  display: flex;
+  gap: 16pt;
+  align-items: center;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 4pt;
+}
+
+.checkbox-box {
+  width: 12pt;
+  height: 12pt;
+  border: 1.5px solid #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10pt;
+}
+
+.checkbox-box.checked::after { content: '✓'; }
+
+/* 서명 영역 */
+.signature-section {
+  margin-top: 20pt;
+  border: 1px solid #333;
+  padding: 10pt 12pt;
+}
+
+.signature-section-title {
+  font-size: 10pt;
+  font-weight: 600;
+  margin-bottom: 8pt;
+  padding-bottom: 6pt;
+  border-bottom: 1px solid #ddd;
+}
+
+.signature-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16pt;
+  margin-top: 8pt;
+}
+
+.signature-label {
+  font-size: 10pt;
+  white-space: nowrap;
+  min-width: 60pt;
+}
+
+.signature-img-wrap {
+  border-bottom: 1px solid #999;
+  flex: 1;
+  min-height: 40pt;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2pt;
+}
+
+.signature-img {
+  max-height: 40pt;
+  max-width: 120pt;
+}
+
+.signature-date {
+  font-size: 9pt;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* 신고일 / 제출처 */
+.form-footer {
+  margin-top: 12pt;
+  font-size: 9pt;
+  color: #555;
+  text-align: right;
+}
+
+/* 결석 신고서 전용 */
+.notice-text {
+  margin-top: 12pt;
+  padding: 8pt;
+  border: 1px solid #ddd;
+  font-size: 8.5pt;
+  color: #555;
+  line-height: 1.6;
+}

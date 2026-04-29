@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>출결 서류 자동화</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .hero {
+      padding: 64px 0 48px;
+    }
+    .hero h1 { margin-bottom: 12px; }
+    .hero p  { font-size: 17px; max-width: 480px; }
+
+    .step-panel {
+      display: none;
+    }
+    .step-panel.active { display: block; }
+
+    /* 서류 미리보기 모달 내부 */
+    .preview-wrap {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    /* 액션 바 */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 24px;
+    }
+
+    .grade-class-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--surface);
+      border-radius: var(--radius-pill);
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 연락처 매칭 UI */
+    .match-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .match-name { width: 80px; font-weight: 600; flex-shrink: 0; }
+    .match-phone { flex: 1; }
+    .match-status { font-size: 13px; }
+    .match-ok  { color: #059669; }
+    .match-fail { color: #DC2626; }
+
+    .phone-input {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-family: var(--font);
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+    }
+    .phone-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+
+    /* 발송 준비 완료 */
+    .send-ready-card {
+      background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+    }
+    .send-ready-card h3 { color: #fff; margin-bottom: 8px; font-size: 22px; }
+    .send-ready-card p  { color: rgba(255,255,255,0.8); margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="header-logo">출결 서류 자동화</a>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="teacher/">대시보드</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- 히어로 -->
+  <section class="hero">
+    <h1>출결 서류,<br>자동으로 처리하세요.</h1>
+    <p>나이스 엑셀 업로드 한 번으로 서류 생성부터<br>학부모 전자서명까지 한 번에.</p>
+  </section>
+
+  <!-- 단계 표시기 -->
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="step-ind-1">
+      <span class="step-num">1</span>
+      <span class="step-label">엑셀 업로드</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-ind-2">
+      <span class="step-num">2</span>
+      <span class="step-label">서류 확인 · 생성</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-ind-3">
+      <span class="step-num">3</span>
+      <span class="step-label">연락처 매칭</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-ind-4">
+      <span class="step-num">4</span>
+      <span class="step-label">발송 준비</span>
+    </div>
+  </div>
+
+  <!-- ── STEP 1: 엑셀 업로드 ── -->
+  <section class="step-panel active" id="panel-1">
+    <div class="card">
+      <div class="card-title">나이스 출결 특이사항 엑셀 업로드</div>
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-label">파일을 여기에 끌어다 놓거나 클릭하세요</div>
+        <div class="dropzone-hint">나이스에서 다운받은 "월별 출결 특이사항" 엑셀 파일 (.xlsx)</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+      </div>
+      <div id="parseError" style="color:#CC3333;margin-top:12px;display:none;font-size:14px;"></div>
+    </div>
+  </section>
+
+  <!-- ── STEP 2: 서류 목록 확인 ── -->
+  <section class="step-panel" id="panel-2">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2>서류 목록 확인</h2>
+        <p id="docSummary" style="margin-top:4px;"></p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span class="grade-class-badge" id="gradeClassBadge">— 학년 —반</span>
+        <button class="btn btn-secondary" onclick="goStep(1)">← 다시 업로드</button>
+        <button class="btn btn-primary" id="btnCreate" onclick="createDocuments()">서류 생성하기</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th>성명</th>
+            <th>서류 종류</th>
+            <th>기간</th>
+            <th>사유</th>
+            <th>미리보기</th>
+          </tr>
+        </thead>
+        <tbody id="docListBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── STEP 3: 연락처 매칭 ── -->
+  <section class="step-panel" id="panel-3">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2>학부모 연락처 매칭</h2>
+        <p>하이에듀에서 다운받은 연락처 엑셀을 업로드하거나, 직접 입력하세요.</p>
+      </div>
+      <button class="btn btn-secondary" onclick="goStep(2)">← 이전</button>
+    </div>
+
+    <!-- 연락처 엑셀 업로드 -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">연락처 엑셀 업로드 (선택)</div>
+      <div class="dropzone" id="contactDropzone" style="padding:32px;">
+        <div class="dropzone-label" style="font-size:15px;">하이에듀 연락처 엑셀 파일</div>
+        <div class="dropzone-hint">학생 이름을 기준으로 자동 매칭합니다</div>
+        <input type="file" id="contactFileInput" accept=".xlsx,.xls" style="display:none">
+      </div>
+    </div>
+
+    <!-- 학생별 연락처 입력 -->
+    <div class="card">
+      <div class="card-title">학생별 연락처 확인 · 수정</div>
+      <div id="contactList"></div>
+      <div class="action-bar">
+        <span id="matchCount" style="font-size:14px;color:var(--text-secondary);"></span>
+        <button class="btn btn-primary" id="btnGoSend" onclick="goStep(4)" disabled>발송 준비 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 4: 발송 준비 완료 ── -->
+  <section class="step-panel" id="panel-4">
+    <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <h2>발송 준비</h2>
+      <button class="btn btn-secondary" onclick="goStep(3)">← 이전</button>
+    </div>
+
+    <div class="send-ready-card" style="margin-bottom:24px;">
+      <h3>✓ 발송 데이터 준비 완료</h3>
+      <p id="sendReadyDesc"></p>
+      <button class="btn" style="background:#fff;color:#007AFF;font-weight:600;" onclick="downloadSendData()">
+        📥 send_data.json 다운로드
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">발송 방법</div>
+      <ol style="padding-left:20px;line-height:2.2;font-size:15px;color:var(--text-secondary);">
+        <li>위 <strong style="color:var(--text);">send_data.json</strong> 파일을 다운로드합니다.</li>
+        <li><strong style="color:var(--text);">hi_edu_sender</strong> 폴더에 파일을 넣습니다.</li>
+        <li>터미널에서 <code style="background:var(--bg);padding:2px 8px;border-radius:4px;">python send.py</code>를 실행합니다.</li>
+        <li>하이에듀에 자동 로그인하여 학부모님께 문자가 발송됩니다.</li>
+      </ol>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <a href="teacher/" class="btn btn-primary">교사 대시보드에서 서명 현황 확인 →</a>
+      </div>
+    </div>
+
+    <!-- 발송 메시지 미리보기 -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">발송 메시지 미리보기</div>
+      <div id="msgPreviewList" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 미리보기 모달 -->
+<div class="modal-backdrop" id="previewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="previewTitle">서류 미리보기</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="preview-wrap" id="previewContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/attendance-parser.js"></script>
+<link rel="stylesheet" href="assets/print.css" media="print">
+<script src="assets/main.js"></script>
+</body>
+</html>

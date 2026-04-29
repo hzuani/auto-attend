@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>교사 대시보드 — 출결 서명 현황</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/print.css" media="print">
+  <style>
+    /* ── 로그인 화면 ── */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .login-card h2 { margin-bottom: 6px; }
+    .login-card p  { margin-bottom: 28px; }
+
+    .form-field {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .login-error {
+      color: #CC3333;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    /* ── 대시보드 ── */
+    #dashboard { display: none; }
+
+    .dash-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      margin-bottom: 32px;
+    }
+    .dash-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--surface);
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--accent); }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* 서명 이미지 */
+    .sig-thumb {
+      max-height: 36px;
+      max-width: 100px;
+      object-fit: contain;
+    }
+
+    /* 인쇄 미리보기 모달 */
+    .print-preview {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+
+    @media print {
+      #loginScreen, #dashboard .no-print { display: none !important; }
+      .print-doc-wrap { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── 로그인 화면 ── -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <h2>교사 로그인</h2>
+    <p>출결 서명 현황을 확인하려면 로그인하세요.</p>
+
+    <div class="form-field">
+      <label class="form-label">이메일</label>
+      <input class="form-input" type="email" id="loginEmail" placeholder="teacher@school.kr" autocomplete="email">
+    </div>
+    <div class="form-field">
+      <label class="form-label">비밀번호</label>
+      <input class="form-input" type="password" id="loginPw" placeholder="비밀번호"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="doLogin()" id="loginBtn">
+      로그인
+    </button>
+    <div class="login-error" id="loginError" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ── 대시보드 ── -->
+<div id="dashboard">
+  <div class="dash-header no-print">
+    <div class="container dash-header-inner">
+      <div style="font-size:17px;font-weight:600;letter-spacing:-0.02em;">출결 서명 현황</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-ghost" style="font-size:14px;" onclick="loadDocuments()">↺ 새로고침</button>
+        <button class="btn btn-secondary" style="font-size:14px;" onclick="doLogout()">로그아웃</button>
+        <a href="/" class="btn btn-primary" style="font-size:14px;">+ 서류 생성</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- 통계 카드 -->
+    <div class="stats-grid no-print" id="statsGrid">
+      <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">전체</div></div>
+      <div class="stat-card"><div class="stat-value" id="statPending" style="color:#D97706;">—</div><div class="stat-label">서명 대기</div></div>
+      <div class="stat-card"><div class="stat-value" id="statSigned" style="color:#059669;">—</div><div class="stat-label">서명 완료</div></div>
+      <div class="stat-card"><div class="stat-value" id="statExpired" style="color:#9CA3AF;">—</div><div class="stat-label">만료</div></div>
+    </div>
+
+    <!-- 필터 -->
+    <div class="filter-row no-print">
+      <select class="filter-select" id="filterGrade" onchange="applyFilter()">
+        <option value="">전체 학년</option>
+      </select>
+      <select class="filter-select" id="filterClass" onchange="applyFilter()">
+        <option value="">전체 반</option>
+      </select>
+      <div style="display:flex;gap:6px;margin-left:8px;">
+        <button class="filter-btn active" data-status="" onclick="setStatusFilter(this, '')">전체</button>
+        <button class="filter-btn" data-status="pending" onclick="setStatusFilter(this, 'pending')">대기</button>
+        <button class="filter-btn" data-status="signed" onclick="setStatusFilter(this, 'signed')">완료</button>
+        <button class="filter-btn" data-status="expired" onclick="setStatusFilter(this, 'expired')">만료</button>
+      </div>
+    </div>
+
+    <!-- 문서 테이블 -->
+    <div class="table-wrap" style="margin-bottom:48px;">
+      <table id="docTable">
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th>성명</th>
+            <th>학년/반</th>
+            <th>서류 종류</th>
+            <th>기간</th>
+            <th>상태</th>
+            <th>서명</th>
+            <th class="no-print">액션</th>
+          </tr>
+        </thead>
+        <tbody id="docTableBody">
+          <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-secondary);">
+            <div class="loading-spinner" style="margin:0 auto 12px;width:24px;height:24px;border-width:2px;border-top-color:var(--accent);border-color:var(--border);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+            불러오는 중...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 / 인쇄 모달 -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title" id="detailTitle">서류 상세</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="print-preview" id="detailContent"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
+        <button class="btn btn-primary" onclick="printDoc()">🖨️ 인쇄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../assets/attendance-parser.js"></script>
+<script src="teacher.js"></script>
+</body>
+</html>
