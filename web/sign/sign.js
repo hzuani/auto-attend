@@ -5,7 +5,7 @@
 // ── Supabase 설정 ─────────────────────────────────────
 const SUPABASE_URL  = 'https://rkqizpfwabbildcxaapbe.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrcWl6cGZ3YWJpbGRjeGFhcGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODM1NTEsImV4cCI6MjA5Mjk1OTU1MX0.Gq8Yv1MLPFzrUcyd5grhX3sEIGv_oJvRqao3Sxz3tF4';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── 초기화 ───────────────────────────────────────────
 let signaturePad = null;
@@ -22,7 +22,7 @@ async function init() {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('documents')
       .select('*')
       .eq('sign_token', token)
@@ -168,7 +168,7 @@ async function submitSignature() {
     const sigData = signaturePad.toDataURL('image/png');
     const now     = new Date().toISOString();
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('documents')
       .update({
         status:         'signed',

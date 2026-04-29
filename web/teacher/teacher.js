@@ -5,7 +5,7 @@
 // ── Supabase 설정 ─────────────────────────────────────
 const SUPABASE_URL  = 'https://rkqizpfwabbildcxaapbe.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrcWl6cGZ3YWJpbGRjeGFhcGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODM1NTEsImV4cCI6MjA5Mjk1OTU1MX0.Gq8Yv1MLPFzrUcyd5grhX3sEIGv_oJvRqao3Sxz3tF4';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── 전역 상태 ─────────────────────────────────────────
 let allDocs       = [];
@@ -14,7 +14,7 @@ let currentDocIdx = null;
 
 // ── 초기화 ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) {
     showDashboard();
     loadDocuments();
@@ -39,7 +39,7 @@ async function doLogin() {
   errEl.style.display = 'none';
 
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pw });
     if (error) throw error;
     showDashboard();
     loadDocuments();
@@ -53,7 +53,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
 }
@@ -66,7 +66,7 @@ function showDashboard() {
 // ── 문서 불러오기 ─────────────────────────────────────
 async function loadDocuments() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('documents')
       .select('*')
       .order('created_at', { ascending: false });

@@ -9,7 +9,7 @@ const SUPABASE_URL  = 'https://rkqizpfwabbildcxaapbe.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrcWl6cGZ3YWJpbGRjeGFhcGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODM1NTEsImV4cCI6MjA5Mjk1OTU1MX0.Gq8Yv1MLPFzrUcyd5grhX3sEIGv_oJvRqao3Sxz3tF4';
 const VERCEL_BASE   = window.location.origin;
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── 전역 상태 ─────────────────────────────────────────
 let parsedResult   = null;   // { grade, cls, documents }
@@ -151,7 +151,7 @@ async function createDocuments() {
       periods:      doc.periods || null
     }));
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('documents')
       .insert(rows)
       .select('id, sign_token, student_name, student_no');
@@ -353,7 +353,7 @@ async function updateSmsStatus(sendData) {
   try {
     for (const item of sendData) {
       if (!item.doc_ids?.length) continue;
-      await supabase
+      await supabaseClient
         .from('documents')
         .update({ parent_phone: item.parent_phone, sms_status: 'ready' })
         .in('id', item.doc_ids);
