@@ -77,14 +77,42 @@ async function handleNEISFile(file) {
       return;
     }
 
+    // 학년/반 입력 필드 채우기
+    const gradeInput = document.getElementById('inputGrade');
+    const classInput = document.getElementById('inputClass');
+    const notice     = document.getElementById('gradeClassNotice');
+
+    if (parsedResult.grade && parsedResult.grade !== '?') {
+      gradeInput.value = parsedResult.grade;
+      notice.style.display = 'none';
+    } else {
+      gradeInput.value = '';
+      notice.style.display = 'inline';
+    }
+    if (parsedResult.cls && parsedResult.cls !== '?') {
+      classInput.value = parsedResult.cls;
+    } else {
+      classInput.value = '';
+    }
+
     renderDocList(parsedResult.documents);
-    document.getElementById('gradeClassBadge').textContent = `${parsedResult.grade}학년 ${parsedResult.cls}반`;
     document.getElementById('docSummary').textContent = `총 ${parsedResult.documents.length}건의 서류가 확인되었습니다.`;
     goStep(2);
   } catch (err) {
     errEl.textContent = `파싱 오류: ${err.message}`;
     errEl.style.display = 'block';
     console.error(err);
+  }
+}
+
+// ── 학년/반 수동 입력 반영 ────────────────────────────
+function updateGradeClass() {
+  const g = document.getElementById('inputGrade').value.trim();
+  const c = document.getElementById('inputClass').value.trim();
+  if (parsedResult) {
+    parsedResult.grade = g || '?';
+    parsedResult.cls   = c || '?';
+    parsedResult.documents.forEach(d => { d.grade = parsedResult.grade; d.cls = parsedResult.cls; });
   }
 }
 
@@ -132,6 +160,16 @@ document.getElementById('previewModal').addEventListener('click', e => {
 
 // ── Step 2: Supabase에 서류 생성 ─────────────────────
 async function createDocuments() {
+  // 학년/반 확인
+  const grade = document.getElementById('inputGrade').value.trim();
+  const cls   = document.getElementById('inputClass').value.trim();
+  if (!grade || !cls) {
+    toast('학년과 반을 입력해주세요.', true);
+    document.getElementById('inputGrade').focus();
+    return;
+  }
+  updateGradeClass();
+
   const btn = document.getElementById('btnCreate');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 생성 중...';
