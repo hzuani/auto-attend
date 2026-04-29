@@ -5,7 +5,7 @@
 
 // ── Supabase 설정 ─────────────────────────────────────
 // TODO: Supabase 프로젝트 생성 후 아래 값을 교체하세요.
-const SUPABASE_URL  = 'https://rkqizpfwabbildcxaapbe.supabase.co';
+const SUPABASE_URL  = 'https://rkqizpfwabildcxaapbe.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrcWl6cGZ3YWJpbGRjeGFhcGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODM1NTEsImV4cCI6MjA5Mjk1OTU1MX0.Gq8Yv1MLPFzrUcyd5grhX3sEIGv_oJvRqao3Sxz3tF4';
 const VERCEL_BASE   = window.location.origin;
 
